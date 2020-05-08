@@ -4,10 +4,10 @@
 # Main sequence
 ![main sequence](mainseq-plantuml.png)
 # Components
-QualitySvc - py/netcore, svc
-Defectoscope - py
-OperationalReporter - aspcore, svc
-Archiver - bash/SQL/NoSQL
+* QualitySvc - py/netcore, svc
+* Defectoscope - py
+* OperationalReporter - aspcore, svc
+* Archiver - bash/SQL/NoSQL
 # Schedule
 1. APCS interface API examination
 2. APCS interface API logic
@@ -18,4 +18,4 @@ Archiver - bash/SQL/NoSQL
 7. OperationalReporter logic
 8. Processes lifetime management logic
 9. systemd / crond management logic
-X. Packaging
+10. Packaging
