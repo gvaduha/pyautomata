@@ -1,0 +1,17 @@
+@startuml
+OpticalCounters -> ItemControlLogic : nextItem
+ItemControlLogic -> ItemControlLogic : calculateNumber
+ItemControlLogic -> Controller : nextItem#
+Controller -> NN : nextItem#
+NN -> Cams : getFrames
+NN -> NN : findDefects
+NN -> DefectOperStore : saveDefect
+DefectOperStore -> dayDirectory : createDefectFile
+NN -> Controller : kickItem#
+Controller -> ItemControlLogic : kickItem#
+group @ future iteration
+  OpticalCounters -> ItemControlLogic : nextItem
+  ItemControlLogic -> ItemControlLogic : calculateKickerNumber
+  ItemControlLogic -> DummyKicker : kickItem
+end
+@enduml

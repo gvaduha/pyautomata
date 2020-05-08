@@ -1,0 +1,61 @@
+@startuml
+package systemd <<Rectangle>>{
+}
+package crond <<Rectangle>>{
+}
+package APCS<<external>> <<Rectangle>>{
+  interface HealthChecker
+  interface OpticalCounters
+  interface DummyKicker
+}
+package QualityService <<Rectangle>> {
+  class LifeMgmt
+  class ItemControlLogic
+}
+package Defectoscope <<Rectangle>> {
+  class Controller
+  class NN
+  class DefectOperStore
+}
+package cams <<Rectangle>>{
+}
+package filesystem <<Rectangle>>{
+  class dayDirectory {
+    img.#.type.ts.png
+  }
+}
+package OperationalReporter <<Rectangle>>{
+  class WebServer
+}
+package Archiver <<Rectangle>>{
+  class ETL
+}
+package Store <<Database>>{
+}
+package WebBrowser <<Rectangle>>{
+}
+
+systemd ..> Defectoscope
+systemd ..> OperationalReporter
+
+LifeMgmt -right-> HealthChecker : heartBeat
+OpticalCounters --> ItemControlLogic : nextItem
+ItemControlLogic --> DummyKicker : kickItem
+
+LifeMgmt --> Controller : (re)start
+Controller -up-> LifeMgmt : heartBeat
+ItemControlLogic --> Controller : nextItem#
+Controller -up-> ItemControlLogic : kickItem#
+
+Controller --> NN : nextItem#
+NN --> cams
+NN -left-> DefectOperStore : save
+DefectOperStore --> dayDirectory : writeFile
+
+OperationalReporter --> filesystem
+WebBrowser --> OperationalReporter
+
+crond ..> Archiver
+Archiver --> Store
+Archiver --> dayDirectory : offload/remove
+@enduml
