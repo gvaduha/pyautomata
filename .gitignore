@@ -139,5 +139,6 @@ cython_debug/
 
 # C files
 *.o
+*.so
 *.swp
 
