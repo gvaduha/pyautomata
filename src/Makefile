@@ -6,5 +6,5 @@ LDFLAGS:=$(shell python3-config --ldflags)
 
 build:
 	#@echo $(CFLAGS)
-	$(CC) -o pycallback *.c $(CFLAGS) $(LDFLAGS)
+	$(CC) -o bin/pycallback *.c $(CFLAGS) $(LDFLAGS)
     
