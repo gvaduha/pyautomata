@@ -6,14 +6,17 @@
 //#include <unistd.h>
 
 
+static void call_sighandler(int signal, int val);
+
 // RT signalling code
 void rt_handler(int signal, siginfo_t *info, void *arg __attribute__ ((__unused__)))
 {
     int val = info->si_value.sival_int;
     printf("signal arrived: %d=%d\n", signal, val);
+    call_sighandler(signal, val);
 }
 
-bool subscribe_signal(int signal, bool unsubscribe = false)
+int subscribe_signal(int signal, bool unsubscribe = false)
 {
     struct sigaction action;
     sigset_t mask;
@@ -27,24 +30,20 @@ bool subscribe_signal(int signal, bool unsubscribe = false)
 	    action.sa_sigaction = rt_handler;
     }
     sigemptyset(&action.sa_mask);
-    if (sigaction(signal, &action, 0) < 0)
-        return false;
+    if (int res = sigaction(signal, &action, 0) < 0)
+        return res;
 
     sigemptyset(&mask);
     sigaddset(&mask, signal);
-    sigprocmask(unsubscribe ? SIG_UNBLOCK : SIG_BLOCK, &mask, 0);
+    return sigprocmask(unsubscribe ? SIG_UNBLOCK : SIG_BLOCK, &mask, 0);
 }
 
-bool send_rt_signal(int signo, int value)
+int send_rt_signal(pid_t pid, int signo, int value)
 {
     union sigval sivalue;
     sivalue.sival_int = value;
 
-    if (sigqueue(getpid(), signo, sivalue) < 0) {
-    	fprintf(stderr, "sigqueue failed: %s\n", strerror(errno));
-	return false;
-    }
-    return true;
+    return sigqueue(pid, signo, sivalue);
 }
 
 // Python wrapper code
@@ -67,7 +66,7 @@ static PyObject* set_sighandler(PyObject *self, PyObject *args) {
         Py_XDECREF(sighandlers_map[signal]);
         sighandlers_map[signal] = temp;
 
-	//subscribe_signal(SIGRTMIN+signal);
+	    subscribe_signal(SIGRTMIN+signal);
     }
     Py_RETURN_NONE;
 }
@@ -91,9 +90,43 @@ static PyObject* test_sighandler(PyObject *self, PyObject *args) {
             PyErr_SetString(PyExc_TypeError, "handler execution result is null");
             return 0; /* Pass error back */
 	    }
-	}
         Py_DECREF(result);
+	}
 	Py_RETURN_NONE;
+}
+
+static PyObject* send_signal(PyObject *self, PyObject *args) {
+    long pid;
+	int signal, val;
+	if (PyArg_ParseTuple(args, "lii", &pid, &signal, &val)) {
+        if (signal < 0 || signal > 31) {
+            PyErr_SetString(PyExc_TypeError, "signal number should be in 0-31 range");
+            return 0;
+        }
+        if (send_rt_signal((pid_t)pid, SIGRTMIN+signal, val) < 0) {
+            PyErr_SetString(PyExc_TypeError, strerror(errno));
+            return 0;
+        }
+	}
+	Py_RETURN_NONE;
+}
+
+static void call_sighandler(int signal, int val)
+{
+	PyObject *arglist, *result;
+    arglist = Py_BuildValue("ii", signal, val);
+    signal = signal - SIGRTMIN;
+    if (0 == sighandlers_map[signal]) {
+        //TODO: call py error handler. install error handler with set_errorhandler
+        return;
+    }
+   	result = PyEval_CallObject(sighandlers_map[signal], arglist);
+    Py_DECREF(arglist);
+    if (result == 0) {
+        //TODO: call py error handler. install error handler with set_errorhandler
+        return;
+    }
+    Py_DECREF(result);
 }
 
 static PyMethodDef mod_methods[] = { 
@@ -104,6 +137,10 @@ static PyMethodDef mod_methods[] = {
     {
         "test_sighandler", test_sighandler, METH_VARARGS,
         "Test real time hadler callback. Call (int signum, int value)"
+    },  
+    {
+        "send_signal", send_signal, METH_VARARGS,
+        "Send realtime signal. Call (int signum, int value)"
     },  
     {0, 0, 0, 0}
 };
