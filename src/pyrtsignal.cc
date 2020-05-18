@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <signal.h>
 #include <Python.h>
-//#include <stdlib.h>
+#include <stdlib.h>
 //#include <string.h>
 //#include <unistd.h>
 
@@ -11,6 +11,7 @@ static void call_sighandler(int signal, int val);
 // RT signalling code
 void rt_handler(int signal, siginfo_t *info, void *arg __attribute__ ((__unused__)))
 {
+    system("touch $(date --rfc-3339=seconds | awk -F ' ' '{print $2}')");
     int val = info->si_value.sival_int;
     fprintf(stderr, "===> signal arrived: %d=%d\n", signal, val);
     call_sighandler(signal, val);
@@ -22,10 +23,12 @@ int subscribe_signal(int signal, bool unsubscribe = false)
     sigset_t mask;
 
     if (unsubscribe) {
+fprintf(stderr, "===> REsetting rt_handler for:%d\n", signal);
 	    action.sa_flags = SA_RESETHAND;
 	    action.sa_handler = SIG_DFL;
     }
     else {
+fprintf(stderr, "===> setting rt_handler for:%d\n", signal);
 	    action.sa_flags = SA_SIGINFO;
 	    action.sa_sigaction = rt_handler;
     }
@@ -33,9 +36,11 @@ int subscribe_signal(int signal, bool unsubscribe = false)
     if (int res = sigaction(signal, &action, 0) < 0)
         return res;
 
+fprintf(stderr, "===> setting MASK for:%d\n", signal);
     sigemptyset(&mask);
     sigaddset(&mask, signal);
-    return sigprocmask(unsubscribe ? SIG_UNBLOCK : SIG_BLOCK, &mask, 0);
+    return sigprocmask(/*unsubscribe ?*/ SIG_UNBLOCK /*: SIG_BLOCK*/, &mask, 0);
+    //return 0;
 }
 
 int send_rt_signal(pid_t pid, int signal, int value)
@@ -67,7 +72,7 @@ static PyObject* set_sighandler(PyObject *self, PyObject *args) {
         Py_XDECREF(sighandlers_map[signal]);
         sighandlers_map[signal] = temp;
 
-	    subscribe_signal(SIGRTMIN+signal);
+	subscribe_signal(SIGRTMIN+signal);
     }
     Py_RETURN_NONE;
 }
