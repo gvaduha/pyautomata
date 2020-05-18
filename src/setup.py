@@ -3,9 +3,9 @@
 
 from distutils.core import setup, Extension
 
-pycallback_module = Extension('pycallback', sources = ['pycallback.c'])
+pyrtsignal_module = Extension('pyrtsignal', sources = ['pyrtsignal.cc'])
 
-setup(name='pycallback',
+setup(name='pyrtsignal',
       version='0.1.0',
-      description='Python callback module written in C',
-      ext_modules=[pycallback_module])
+      description='Python real time signal module',
+      ext_modules=[pyrtsignal_module])
