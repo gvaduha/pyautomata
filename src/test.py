@@ -1,13 +1,20 @@
+#! /usr/bin/env python3
+
 import pyrtsignal as r
-import os
+import os, time
 
 def sighandler(s,v):
     print("sighandler for",s,v)
 
-r.set_sighandler(0, xxx)
-r.set_sighandler(31, xxx)
+r.set_sighandler(0, sighandler)
+r.set_sighandler(31, sighandler)
 
-r.test_sighander(0,10)
+print("--- local tests ---")
+r.test_sighandler(0,10)
 
+print("--- signal tests ---")
 pid = os.getpid()
+r.send_signal(pid, 0, 11)
 
+print("test finished")
+time.sleep(1)

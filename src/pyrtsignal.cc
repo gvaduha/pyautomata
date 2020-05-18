@@ -12,7 +12,7 @@ static void call_sighandler(int signal, int val);
 void rt_handler(int signal, siginfo_t *info, void *arg __attribute__ ((__unused__)))
 {
     int val = info->si_value.sival_int;
-    printf("signal arrived: %d=%d\n", signal, val);
+    fprintf(stderr, "===> signal arrived: %d=%d\n", signal, val);
     call_sighandler(signal, val);
 }
 
@@ -38,12 +38,13 @@ int subscribe_signal(int signal, bool unsubscribe = false)
     return sigprocmask(unsubscribe ? SIG_UNBLOCK : SIG_BLOCK, &mask, 0);
 }
 
-int send_rt_signal(pid_t pid, int signo, int value)
+int send_rt_signal(pid_t pid, int signal, int value)
 {
     union sigval sivalue;
     sivalue.sival_int = value;
 
-    return sigqueue(pid, signo, sivalue);
+fprintf(stderr, "----------------------------- sending rt singal to %d: #%d with %d", pid,signal, value);
+    return sigqueue(pid, signal, sivalue);
 }
 
 // Python wrapper code
