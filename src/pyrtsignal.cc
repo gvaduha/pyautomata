@@ -49,39 +49,47 @@ bool send_rt_signal(int signo, int value)
 
 // Python wrapper code
 static PyObject *sighandlers_map[32];
-static PyObject *my_callback = 0;
 
 static PyObject* set_sighandler(PyObject *self, PyObject *args) {
     PyObject *temp;
     int signal;
 
-    if (PyArg_ParseTuple(args, "iO:set_callback", &signal, &temp)) {
+    if (PyArg_ParseTuple(args, "iO:set_sighandler", &signal, &temp)) {
+        if (signal < 0 || signal > 31) {
+            PyErr_SetString(PyExc_TypeError, "signal number should be in 0-31 range");
+            return 0;
+        }
         if (!PyCallable_Check(temp)) {
-            PyErr_SetString(PyExc_TypeError, "parameter must be callable");
+            PyErr_SetString(PyExc_TypeError, "parameter must be callable (int,int) function");
             return 0;
         }
         Py_XINCREF(temp);
-        Py_XDECREF(my_callback);
-        my_callback = temp;
+        Py_XDECREF(sighandlers_map[signal]);
+        sighandlers_map[signal] = temp;
 
 	//subscribe_signal(SIGRTMIN+signal);
     }
     Py_RETURN_NONE;
 }
 
-static PyObject* test_callback(PyObject *self, PyObject *args) {
-	printf("TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT\n");
+static PyObject* test_sighandler(PyObject *self, PyObject *args) {
 	PyObject *arglist, *result;
-	int argval;
-	if (PyArg_ParseTuple(args, "i", &argval)) {
-			printf("Calling with: %d\n", argval);//////////////////////////////////////////////////////
-            arglist = Py_BuildValue("i", argval);
-       	    result = PyEval_CallObject(my_callback, arglist);
-			printf("%x : %x : %d \n", my_callback, &my_callback, result);//////////////////////////////////////////////////////
-            Py_DECREF(arglist);
-            if (result == 0) {
-                PyErr_SetString(PyExc_TypeError, "result is null");
-                return 0; /* Pass error back */
+	int signal, val;
+	if (PyArg_ParseTuple(args, "ii", &signal, &val)) {
+        arglist = Py_BuildValue("ii", signal, val);
+        if (signal < 0 || signal > 31) {
+            PyErr_SetString(PyExc_TypeError, "signal number should be in 0-31 range");
+            return 0;
+        }
+        if (0 == sighandlers_map[signal]) {
+            PyErr_SetString(PyExc_TypeError, "signal handler is null for this signal");
+            return 0; /* Pass error back */
+	    }
+       	result = PyEval_CallObject(sighandlers_map[signal], arglist);
+        Py_DECREF(arglist);
+        if (result == 0) {
+            PyErr_SetString(PyExc_TypeError, "handler execution result is null");
+            return 0; /* Pass error back */
 	    }
 	}
         Py_DECREF(result);
@@ -90,12 +98,12 @@ static PyObject* test_callback(PyObject *self, PyObject *args) {
 
 static PyMethodDef mod_methods[] = { 
     {   
-        "set_signalhandler", set_sighandler, METH_VARARGS,
-        "Set real time singal handler in python code."
+        "set_sighandler", set_sighandler, METH_VARARGS,
+        "Set real time singal handler in python code. Call (int signal_number, pyfunc handler), handler is (int signum, int value)"
     },  
     {
-        "test_callback", test_callback, METH_VARARGS,
-        "Test rt hadler callback"
+        "test_sighandler", test_sighandler, METH_VARARGS,
+        "Test real time hadler callback. Call (int signum, int value)"
     },  
     {0, 0, 0, 0}
 };
