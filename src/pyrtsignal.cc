@@ -19,27 +19,17 @@ void rt_handler(int signal, siginfo_t *info, void *arg __attribute__ ((__unused_
 int subscribe_signal(int signal, bool unsubscribe = false)
 {
     struct sigaction action;
-    sigset_t mask;
 
     if (unsubscribe) {
-fprintf(stderr, "===> REsetting rt_handler for:%d\n", signal);
 	    action.sa_flags = SA_RESETHAND;
 	    action.sa_handler = SIG_DFL;
     }
     else {
-fprintf(stderr, "===> setting rt_handler for:%d\n", signal);
 	    action.sa_flags = SA_SIGINFO;
 	    action.sa_sigaction = rt_handler;
     }
     sigemptyset(&action.sa_mask);
-    if (int res = sigaction(signal, &action, 0) < 0)
-        return res;
-
-fprintf(stderr, "===> setting MASK for:%d\n", signal);
-    sigemptyset(&mask);
-    sigaddset(&mask, signal);
-    return sigprocmask(/*unsubscribe ?*/ SIG_UNBLOCK /*: SIG_BLOCK*/, &mask, 0);
-    //return 0;
+    return sigaction(signal, &action, 0); 
 }
 
 int send_rt_signal(pid_t pid, int signal, int value)
@@ -47,8 +37,15 @@ int send_rt_signal(pid_t pid, int signal, int value)
     union sigval sivalue;
     sivalue.sival_int = value;
 
-fprintf(stderr, "----------------------------- sending rt singal to %d: #%d with %d", pid,signal, value);
-    return sigqueue(pid, signal, sivalue);
+    sigset_t mask;
+    sigemptyset(&mask);
+    sigaddset(&mask, signal);
+    sigprocmask(SIG_BLOCK, &mask, 0);
+
+    //fprintf(stderr, "===> sending rt singal to %d: #%d with %d\n", pid,signal, value);
+    int res = sigqueue(pid, signal, sivalue);
+    sigprocmask(SIG_UNBLOCK, &mask, 0);
+    return res; 
 }
 
 // Python wrapper code
@@ -119,20 +116,21 @@ static PyObject* send_signal(PyObject *self, PyObject *args) {
 static void call_sighandler(int signal, int val)
 {
 	PyObject *arglist, *result;
-    arglist = Py_BuildValue("ii", signal, val);
     signal = signal - SIGRTMIN;
+    arglist = Py_BuildValue("ii", signal, val);
     if (0 == sighandlers_map[signal]) {
         //TODO: call py error handler. install error handler with set_errorhandler
-fprintf(stderr, "===> CALL NO!!! SIGHANDLER: %d=%d\n", signal, val);
+        //fprintf(stderr, "===> CALL NO!!! SIGHANDLER: %d=%d\n", signal, val);
         return;
     }
-fprintf(stderr, "===> BEFORE!!! CALL SIGHANDLER: %d=%d (%lx)\n", signal, val, sighandlers_map[signal]);
+    //fprintf(stderr, "===> BEFORE!!! CALL SIGHANDLER: %d=%d (%lx) args:(%lx)\n", signal, val, sighandlers_map[signal], arglist);
    	result = PyEval_CallObject(sighandlers_map[signal], arglist);
-fprintf(stderr, "===> AFTER!!! CALL SIGHANDLER: %d=%d (%lx)\n", signal, val, sighandlers_map[signal]);
+    //fprintf(stderr, "===> AFTER!!! CALL SIGHANDLER: %d=%d (%lx)\n", signal, val, sighandlers_map[signal]);
+
     Py_DECREF(arglist);
     if (result == 0) {
         //TODO: call py error handler. install error handler with set_errorhandler
-fprintf(stderr, "===> ERROR!!! CALL SIGHANDLER: %d=%d\n", signal, val);
+        //fprintf(stderr, "===> ERROR!!! CALL SIGHANDLER: %d=%d\n", signal, val);
         return;
     }
     Py_DECREF(result);
