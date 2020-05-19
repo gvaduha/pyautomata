@@ -37,14 +37,14 @@ int send_rt_signal(pid_t pid, int signal, int value)
     union sigval sivalue;
     sivalue.sival_int = value;
 
-    sigset_t mask;
-    sigemptyset(&mask);
-    sigaddset(&mask, signal);
-    sigprocmask(SIG_BLOCK, &mask, 0);
+    //sigset_t mask;
+    //sigemptyset(&mask);
+    //sigaddset(&mask, signal);
+    //sigprocmask(SIG_BLOCK, &mask, 0);
 
     //fprintf(stderr, "===> sending rt singal to %d: #%d with %d\n", pid,signal, value);
     int res = sigqueue(pid, signal, sivalue);
-    sigprocmask(SIG_UNBLOCK, &mask, 0);
+    //sigprocmask(SIG_UNBLOCK, &mask, 0);
     return res; 
 }
 
