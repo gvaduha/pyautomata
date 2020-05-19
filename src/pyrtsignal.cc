@@ -11,9 +11,8 @@ static void call_sighandler(int signal, int val);
 // RT signalling code
 void rt_handler(int signal, siginfo_t *info, void *arg __attribute__ ((__unused__)))
 {
-    system("touch $(date --rfc-3339=seconds | awk -F ' ' '{print $2}')");
+    //system("touch $(date --rfc-3339=seconds | awk -F ' ' '{print $2}')");
     int val = info->si_value.sival_int;
-    fprintf(stderr, "===> signal arrived: %d=%d\n", signal, val);
     call_sighandler(signal, val);
 }
 
@@ -124,12 +123,16 @@ static void call_sighandler(int signal, int val)
     signal = signal - SIGRTMIN;
     if (0 == sighandlers_map[signal]) {
         //TODO: call py error handler. install error handler with set_errorhandler
+fprintf(stderr, "===> CALL NO!!! SIGHANDLER: %d=%d\n", signal, val);
         return;
     }
+fprintf(stderr, "===> BEFORE!!! CALL SIGHANDLER: %d=%d (%lx)\n", signal, val, sighandlers_map[signal]);
    	result = PyEval_CallObject(sighandlers_map[signal], arglist);
+fprintf(stderr, "===> AFTER!!! CALL SIGHANDLER: %d=%d (%lx)\n", signal, val, sighandlers_map[signal]);
     Py_DECREF(arglist);
     if (result == 0) {
         //TODO: call py error handler. install error handler with set_errorhandler
+fprintf(stderr, "===> ERROR!!! CALL SIGHANDLER: %d=%d\n", signal, val);
         return;
     }
     Py_DECREF(result);

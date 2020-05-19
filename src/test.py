@@ -14,6 +14,8 @@ r.set_sighandler(0, sighandler)
 
 print("--- signal tests ---")
 pid = os.getpid()
+print("pid:",pid)
+print("sigfun:",sighandler)
 #r.send_signal(pid, 0, 11)
 
 time.sleep(120)
