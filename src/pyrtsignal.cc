@@ -9,15 +9,20 @@
 static void call_sighandler(int signal, int val);
 
 // RT signalling code
-void rt_handler(int signal, siginfo_t *info, void *arg __attribute__ ((__unused__)))
-{
-    //system("touch $(date --rfc-3339=seconds | awk -F ' ' '{print $2}')");
+void rt_handler(int signal, siginfo_t *info, void *arg __attribute__ ((__unused__))) {
+    sigset_t mask;
+    sigemptyset(&mask);
+    sigaddset(&mask, signal);
+    sigprocmask(SIG_BLOCK, &mask, 0);
+
+fprintf(stderr, "----------> got signal");
     int val = info->si_value.sival_int;
     call_sighandler(signal, val);
+
+    sigprocmask(SIG_UNBLOCK, &mask, 0);
 }
 
-int subscribe_signal(int signal, bool unsubscribe = false)
-{
+int subscribe_signal(int signal, bool unsubscribe = false) {
     struct sigaction action;
 
     if (unsubscribe) {
@@ -32,19 +37,12 @@ int subscribe_signal(int signal, bool unsubscribe = false)
     return sigaction(signal, &action, 0); 
 }
 
-int send_rt_signal(pid_t pid, int signal, int value)
-{
+int send_rt_signal(pid_t pid, int signal, int value) {
     union sigval sivalue;
     sivalue.sival_int = value;
 
-    //sigset_t mask;
-    //sigemptyset(&mask);
-    //sigaddset(&mask, signal);
-    //sigprocmask(SIG_BLOCK, &mask, 0);
-
     //fprintf(stderr, "===> sending rt singal to %d: #%d with %d\n", pid,signal, value);
     int res = sigqueue(pid, signal, sivalue);
-    //sigprocmask(SIG_UNBLOCK, &mask, 0);
     return res; 
 }
 
@@ -113,8 +111,7 @@ static PyObject* send_signal(PyObject *self, PyObject *args) {
 	Py_RETURN_NONE;
 }
 
-static void call_sighandler(int signal, int val)
-{
+static void call_sighandler(int signal, int val) {
 	PyObject *arglist, *result;
     signal = signal - SIGRTMIN;
     arglist = Py_BuildValue("ii", signal, val);
@@ -136,6 +133,24 @@ static void call_sighandler(int signal, int val)
     Py_DECREF(result);
 }
 
+static PyObject* suspend_for_signal(PyObject *self, PyObject *args) {
+    int signal;
+	if (PyArg_ParseTuple(args, "i", &signal)) {
+        if (signal < 0 || signal > 31) {
+            PyErr_SetString(PyExc_TypeError, "signal number should be in 0-31 range");
+            return 0;
+        }
+        sigset_t mask;
+        sigemptyset(&mask);
+        sigaddset(&mask, signal);
+        if (sigsuspend(&mask) < 0 && errno != EINTR) {
+            PyErr_SetString(PyExc_TypeError, strerror(errno));
+            return 0;
+        }
+	}
+	Py_RETURN_NONE;
+}
+
 static PyMethodDef mod_methods[] = { 
     {   
         "set_sighandler", set_sighandler, METH_VARARGS,
@@ -148,6 +163,10 @@ static PyMethodDef mod_methods[] = {
     {
         "send_signal", send_signal, METH_VARARGS,
         "Send realtime signal. Call (int signum, int value)"
+    },  
+    {
+        "suspend_for_signal", suspend_for_signal, METH_VARARGS,
+        "Wait for real time signal. Call (int signum)"
     },  
     {0, 0, 0, 0}
 };

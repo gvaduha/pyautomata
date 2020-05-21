@@ -1,4 +1,4 @@
-#! /usr/bin/env python3
+#! /usr/bin/env -S python3 -X faulthandler
 
 import pyrtsignal as r
 import os, time
@@ -20,5 +20,9 @@ print("sigfun:",sighandler)
 r.send_signal(pid, 0, 11)
 r.send_signal(pid, 0, 11)
 
-time.sleep(120)
+#time.sleep(120)
+try:
+    r.suspend_for_signal(0)
+except InterruptedError:
+    pass
 print("test finished")
