@@ -38,7 +38,6 @@ void send_rt_signal(int signal, int value)
 
 pid_t run_detector() {
     pid_t  pid;
-    int ret = 1;
     int status;
     pid = fork();
 
@@ -46,8 +45,13 @@ pid_t run_detector() {
         // Child process creation 
         //pid_t parent_pid = getppid();
         char* argv_list[] = { /*parent_pid,*/ NULL };
-        execv(detectorBinName, argv_list);
-        exit(0);
+        status = execv(detectorBinName, argv_list);
+        exit(status);
+    }
+    else if (pid > 0) {
+        // Parent process check child state
+        if (waitpid(pid, &status, WNOHANG) != 0)
+            return -1;
     }
     return pid;
 }
