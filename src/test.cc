@@ -65,7 +65,8 @@ int main(int argc, char** argv)
     }
 
     printf("Run %d completed", tmppid);
-
+    sleep(120);
+    exit(0);
 
 
     struct sigaction action;
