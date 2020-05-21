@@ -1,0 +1,3 @@
+[submodule "pyrtsignal"]
+	path = pyrtsignal
+	url = https://github.com/gvaduha/pyrtsignal.git
