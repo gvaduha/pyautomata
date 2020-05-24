@@ -4,17 +4,22 @@ from detector import run_detector
 
 def start_detector():
     global inpipe, outpipe
-    r, w = os.pipe()
+    ir, iw = os.pipe() #in pipe
+    ur, uw = os.pipe() #out pipe
     pid = os.fork()
     if pid:
         print("controller waiting for detector")
-        inpipe = os.fdopen(r)
-        outpipe = os.fdopen(w, 'w')
+        os.close(iw)
+        os.close(ur)
+        inpipe = os.fdopen(ir)
+        outpipe = os.fdopen(uw, 'w')
         inpipe.read()
         print("controller go further")
     else:
         #child
-        run_detector(r, w)
+        os.close(ir)
+        os.close(uw)
+        run_detector(ur, iw) #out is in for child
 
 def start_processing():
     outpipe.write(1)

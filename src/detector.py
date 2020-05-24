@@ -17,7 +17,7 @@ def initialize_detection_module():
 def run_detection_module():
     global inpipe, outpipe
     while(1):
-        num = 5#inpipe.read()
+        num = inpipe.read()
         print("process item #", num)
         detect(int(num))
         print("completed process item #", num)
