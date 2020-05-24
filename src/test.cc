@@ -43,15 +43,24 @@ pid_t run_detector() {
 
     if (pid == 0) {
         // Child process creation 
-        //pid_t parent_pid = getppid();
-        char* argv_list[] = { /*parent_pid,*/ NULL };
+        pid_t ppid = getppid();
+        char *parent_pid = new char[sizeof(pid_t)];//malloc(sizeof(pid_t));
+        sprintf(parent_pid, "%d", ppid);
+fprintf(stderr, "create child %s\n", parent_pid);
+        char* argv_list[] = { parent_pid, NULL };
         status = execv(detectorBinName, argv_list);
+fprintf(stderr, "create child %s %d\n", parent_pid, status);
+        delete []parent_pid;
         exit(status);
+fprintf(stderr, "create child %s %d\n", parent_pid, status);
     }
     else if (pid > 0) {
         // Parent process check child state
-        if (waitpid(pid, &status, WNOHANG) != 0)
+fprintf(stderr, "parent process %d\n", pid);
+int xxx;
+        if (xxx=waitpid(pid, &status, WNOHANG) != 0)
             return -1;
+fprintf(stderr, "parent process %d %d %d\n", pid, status, xxx);
     }
     return pid;
 }
@@ -60,12 +69,12 @@ int main(int argc, char** argv)
 {
     pid_t tmppid = run_detector();
     if (tmppid < 0) {
-        fprintf(stderr, "Can't run detector process %s", strerror(errno));
+        fprintf(stderr, "Can't run detector process %s\n", strerror(errno));
         exit(tmppid);
     }
 
-    printf("Run %d completed", tmppid);
-    sleep(120);
+    printf("Run %d completed\n", tmppid);
+    //sleep(120);
     exit(0);
 
 
