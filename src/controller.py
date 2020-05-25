@@ -3,26 +3,26 @@ import os, time, threading
 from detector import run_detector
 
 def start_detector():
-    global inpipe, outpipe
-    ir, iw = os.pipe() #in pipe
-    ur, uw = os.pipe() #out pipe
+    global cmdpipe, respipe
+    cmdr, cmdw = os.pipe() #cmd pipe
+    resr, resw = os.pipe() #res pipe
     pid = os.fork()
     if pid:
         print("controller waiting for detector")
-        os.close(iw)
-        os.close(ur)
-        inpipe = os.fdopen(ir)
-        outpipe = os.fdopen(uw, 'w')
-        inpipe.read()
-        print("controller go further")
+        os.close(cmdr)
+        os.close(resw)
+        cmdpipe = os.fdopen(cmdw, 'w')
+        respipe = os.fdopen(resr)
+        x = respipe.read()
+        print("controller go further", x)
     else:
         #child
-        os.close(ir)
-        os.close(uw)
-        run_detector(ur, iw) #out is in for child
+        os.close(cmdw)
+        os.close(resr)
+        #run_detector(cmdr, resw) #out is in for child
 
 def start_processing():
-    outpipe.write(1)
+    cmdpipe.write("1")
 
 
 def main():
