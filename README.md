@@ -1,5 +1,4 @@
-![logo](PYece-of-Shit.png)
-<img src="PYece-of-Shit.png" width="50">
+<img src="PYece-of-Shit.png" width="100">
 [![Build Status](https://travis-ci.org/gvaduha/pyautomata.svg?branch=master)](https://travis-ci.org//gvaduha/pyautomata)
 Python @ production attempt
 # Top level overview
