@@ -1,4 +1,4 @@
-![logo](PYece-of-Shit.png =100px)
+![logo](PYece-of-Shit.png =100x)
 [![Build Status](https://travis-ci.org/gvaduha/pyautomata.svg?branch=master)](https://travis-ci.org//gvaduha/pyautomata)
 Python @ production attempt
 # Top level overview
