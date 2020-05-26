@@ -30,8 +30,9 @@ def run_detection_module():
         logger.debug("detector process item #{0}".format(num))
         detect(num)
         logger.debug("detector completed process item #{0}".format(num))
-        logger.debug(response_text(ResultType.GOODITEM, num))
-        respipe.write(response_text(ResultType.GOODITEM, num))
+        resmsg = response_text(ResultType.GOODITEM, num)
+        respipe.write(resmsg)
+        respipe.flush()
 
 
 if __name__ == "__main__":

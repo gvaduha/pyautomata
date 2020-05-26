@@ -1,5 +1,5 @@
 #! /usr/bin/env python3
-import sys, os, time, threading
+import sys, os, time, traceback, threading
 from detector_controller import run_detector
 from logger import logger
 
@@ -64,21 +64,21 @@ def check_tardiness_thread():
         send_illegal_state_alarm("detector working slower than incoming items")
 
 # unhandled exceptions hook
-def unhandled_excepthook(type, value, traceback):
-        send_illegal_state_alarm("unhandled error: {0} {1} \n{2}]".format(type, value, traceback))
+def unhandled_excepthook(type, value, tracebk):
+        send_illegal_state_alarm("unhandled error: {0}".format(traceback.format_exception(type, value, tracebk)))
         exit(88)
 
 # main
 def main():
     sys.excepthook = unhandled_excepthook
     start_detector()
-    thr_newsig = threading.Thread(target=newitem_signal_thread)
+    thr_newsig = threading.Thread(target=newitem_signal_thread, daemon = True)
     thr_newsig.start()
-    thr_resproc = threading.Thread(target=result_processing_thread)
+    thr_resproc = threading.Thread(target=result_processing_thread, daemon = True)
     thr_resproc.start()
 
     thr_newsig.join()
-    #thr_resproc.join()
+    thr_resproc.join()
 
     #thr_chktard = threading.Thread(target=check_tardiness_thread)
     #thr_chktard.start()
