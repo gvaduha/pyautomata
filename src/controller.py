@@ -36,7 +36,8 @@ def send_illegal_state_alarm(msg):
 
 # thread to process incoming signals to start new item processing
 def newitem_signal_thread():
-    global current_item
+    global current_item, processed_item
+    processed_item = 0
     current_item = 0 ############ TODO: Implement function
     try:
         while(1):
@@ -62,9 +63,13 @@ def result_processing_thread():
 def check_tardiness_thread():
     if (current_item - processed_item > 2): # we dont want to lock as it is very relative measure
         send_illegal_state_alarm("detector working slower than incoming items")
+    threading.Timer(1, check_tardiness_thread).start()
 
 # unhandled exceptions hook
 def unhandled_excepthook(type, value, tracebk):
+        if type == KeyboardInterrupt:
+            send_illegal_state_alarm("controller interrupted by keyboard")
+            exit(0)
         send_illegal_state_alarm("unhandled error: {0}".format(traceback.format_exception(type, value, tracebk)))
         exit(88)
 
@@ -76,18 +81,10 @@ def main():
     thr_newsig.start()
     thr_resproc = threading.Thread(target=result_processing_thread, daemon = True)
     thr_resproc.start()
+    check_tardiness_thread()
 
     thr_newsig.join()
     thr_resproc.join()
-
-    #thr_chktard = threading.Thread(target=check_tardiness_thread)
-    #thr_chktard.start()
-    #thr_chktard.join()
-
-def check_tardiness_thread():
-    if (current_item - processed_item > 2): # we dont want to lock as it is very relative measure
-        send_illegal_state_alarm("detector working slower than incoming items")
-    exit(1) # we have never exit!
 
 
 if __name__ == "__main__":
