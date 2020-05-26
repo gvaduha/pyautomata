@@ -1,6 +1,6 @@
-[![Build Status](https://travis-ci.org/gvaduha/pyautomata.svg?branch=master)](https://travis-ci.org//gvaduha/pyautomata)
+<img src="PYece-of-Shit.png" width="88"/>
 Python @ production attempt
-<img src="PYece-of-Shit.png" width="100"/>
+[![Build Status](https://travis-ci.org/gvaduha/pyautomata.svg?branch=master)](https://travis-ci.org//gvaduha/pyautomata)
 # Top level overview
 ![top level architecture overview](toparch.jpg)
 ![top level architecture overview](toparch-plantuml.png)
