@@ -6,6 +6,8 @@ from logger import logger
 # globals
 global cmdpipe, respipe
 global current_item, processed_item
+global running
+
 
 # start detector as separate process to communicate with
 # cmdpipe - sending signals to process item
@@ -40,7 +42,7 @@ def newitem_signal_thread():
     processed_item = 0
     current_item = 0 ############ TODO: Implement function
     try:
-        while(1):
+        while(running):
             logger.debug("new signal #{0}".format(current_item))
             cmdpipe.write("{0}\n".format(current_item))
             current_item = current_item + 1
@@ -52,7 +54,7 @@ def newitem_signal_thread():
 # thread to process result of item processed with newitem_signal_thread
 def result_processing_thread():
     try:
-        while(1):
+        while(running):
             logger.debug("result processing waiting for next item")
             res = respipe.readline()
             logger.debug("result received #{0}".format(res))
@@ -63,11 +65,14 @@ def result_processing_thread():
 def check_tardiness_thread():
     if (current_item - processed_item > 2): # we dont want to lock as it is very relative measure
         send_illegal_state_alarm("detector working slower than incoming items")
-    threading.Timer(1, check_tardiness_thread).start()
+    if running:
+        threading.Timer(1, check_tardiness_thread).start()
 
 # unhandled exceptions hook
 def unhandled_excepthook(type, value, tracebk):
         if type == KeyboardInterrupt:
+            global running
+            running = False
             send_illegal_state_alarm("controller interrupted by keyboard")
             exit(0)
         send_illegal_state_alarm("unhandled error: {0}".format(traceback.format_exception(type, value, tracebk)))
@@ -75,8 +80,10 @@ def unhandled_excepthook(type, value, tracebk):
 
 # main
 def main():
+    global running
     sys.excepthook = unhandled_excepthook
     start_detector()
+    running = True
     thr_newsig = threading.Thread(target=newitem_signal_thread, daemon = True)
     thr_newsig.start()
     thr_resproc = threading.Thread(target=result_processing_thread, daemon = True)
@@ -84,7 +91,7 @@ def main():
     check_tardiness_thread()
 
     thr_newsig.join()
-    thr_resproc.join()
+    #thr_resproc.join()
 
 
 if __name__ == "__main__":
