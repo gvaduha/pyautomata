@@ -1,4 +1,5 @@
-![main sequence](PYece-of-shit.png)
+![logo](PYece-of-Shit.png)
+[![Build Status](https://travis-ci.org/gvaduha/pyautomata.svg?branch=master)](https://travis-ci.org//gvaduha/pyautomata)
 Python @ production attempt
 # Top level overview
 ![top level architecture overview](toparch.jpg)
