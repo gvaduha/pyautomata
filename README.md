@@ -1,3 +1,5 @@
+![main sequence](PYece-of-shit.png)
+Python @ production attempt
 # Top level overview
 ![top level architecture overview](toparch.jpg)
 ![top level architecture overview](toparch-plantuml.png)
