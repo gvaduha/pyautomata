@@ -1,4 +1,4 @@
-<img src="PYece-of-Shit.png" width="88"/> xxx
+<img src="PYece-of-Shit.png" width="88"/> ==
 Python @ production attempt
 [![Build Status](https://travis-ci.org/gvaduha/pyautomata.svg?branch=master)](https://travis-ci.org//gvaduha/pyautomata)
 # Top level overview
